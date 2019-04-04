@@ -133,6 +133,7 @@ struct IMU
 		//Modo de operación a utilizar
 		data[0] = BNO055_OPR_MODE_ADD;
 		data[1] = OPERATION_MODE_NDOF;
+		writeData(2);
 
 		usleep(20000);
 	}
