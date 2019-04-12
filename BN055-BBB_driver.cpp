@@ -1,8 +1,7 @@
 /*  Programa que realiza la inicialización de un IMU BNO055
  *  y realiza lecturas de cuaterniones. 
  *
- *  Ing. Alex Antonio Turriza Suárez, 2019
- *  Dr. Arturo Espinosa Romero, 
+ *  Dr. Arturo Espinosa Romero, Ing. Alex Antonio Turriza Suárez, 2019
  */
 
 #include <cstdio>
@@ -42,6 +41,9 @@
 /*REGISTROS DE DATOS*/
 #define BNO055_QUATDATA_ADD 0x20 // WLSB, WMSB, X, Y, Z [0x20 -> 0x27]
 
+/*REGISTRO DE CALIBRACIÓN*/
+#define BNO055_CALIB_STAT_ADD 0x35
+
 /*REGISTROS DE OPERACIÓN*/
 #define BNO055_OPR_MODE_ADD 0x3D
 #define BNO055_PWR_MODE_ADD 0x3E
@@ -68,6 +70,8 @@ struct IMU
 	char _buffer[8];
 	unsigned char imuAddress;
 	int16_t x, y, z, w;
+	int8_t calGyro, calMag, calAcc, calSys;
+	const double scale = (1.0 / (1 << 14));
 
 	void setAddress(unsigned char address)
 	{
@@ -95,6 +99,7 @@ struct IMU
 	void start(unsigned char quatadd = BNO055_ADDRESS)
 	{
 		x = y = z = w = 0;
+		calGyro = calMag = calAcc = calSys = 0;
 		imuAddress = quatadd;
 		setAddress(imuAddress);
 
@@ -154,13 +159,37 @@ struct IMU
 		close(file);
 	}
 
+	void readCalibVals()
+	{
+		int rval;
+		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
+		{
+			printf("Calib: Failed to acquire bus access and/or talk to slave");
+			exit(-1);
+		}
+		data[0] = BNO055_CALIB_STAT_ADD;
+		writeData(1);
+		rval = read(file, data, 8);
+		if(rval < 0)
+		{
+			printf("Calib: Failed to acquire bus access and/or talk to slave");
+			strerror_r(errno, _buffer, 63);
+			printf("%s\n\n", _buffer);
+		}
+		cout << "Raw data: " << data[0] << endl;
+		calSys = int8_t ((data[0] >> 6) & 0x03);
+		calGyro = int8_t ((data[0] >> 4) & 0x03);
+		calAcc = int8_t ((data[0] >> 2) & 0x03);
+		calMag = int8_t ((data[0]) & 0x03);
+	}
+
 	void readQuatVals()
 	{
 		int cont, rval;
 		cont = 0;
 		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
 		{
-			printf("Failed to acquire bus access and/or talk to slave.\n");
+			printf("Quat: Failed to acquire bus access and/or talk to slave.\n");
 			exit(-1);
 		}
 		data[0] = BNO055_QUATDATA_ADD;
@@ -171,7 +200,7 @@ struct IMU
             		if (rval < 0)
             		{
                 		/* ERROR HANDLING: i2c transaction failed */
-                		printf("Acc: Failed to read to the i2c bus.\n");
+                		printf("Quat: Failed to read to the i2c bus.\n");
                 		strerror_r(errno, _buffer, 63);
                 		printf("%s\n\n", _buffer);
             		}
@@ -193,13 +222,20 @@ int main()
 	IMU sensors(filename);
 	do
 	{
-		sensors.readQuatVals();
-		cout << "W: " << sensors.w << endl;
-		cout << "X: " << sensors.x << endl;
-		cout << "Y: " << sensors.y << endl;
-		cout << "Z: " << sensors.z << endl;
+		/*sensors.readQuatVals();
+		cout << "W: " << (double) sensors.w * sensors.scale << endl;
+		cout << "X: " << (double) sensors.x * sensors.scale << endl;
+		cout << "Y: " << (double) sensors.y * sensors.scale << endl;
+		cout << "Z: " << (double) sensors.z * sensors.scale << endl;
 		usleep (50000);
+		cout << endl;*/
+		sensors.readCalibVals();
+		cout << "Sys: " << sensors.calSys << endl;
+		cout << "Mag: " << sensors.calMag << endl;
+		cout << "Gyro: " << sensors.calGyro << endl;
+		cout << "Accel: " << sensors.calAcc << endl;
+		usleep(50000);
+		cout << endl;
 	} 
-	while (cont++ < 1000);
-	return 0;
+	while (cont++ < 20000);
 }
