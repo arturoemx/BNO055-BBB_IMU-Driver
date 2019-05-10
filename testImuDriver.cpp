@@ -6,6 +6,8 @@ using namespace std;
 int main()
 {
 	int cont = 0;
+	bool flag ;
+
 	char filename[] = "/dev/i2c-1";
 	BNO055 sensors(filename);
 	do
@@ -24,6 +26,8 @@ int main()
 		cout << "Accel: " << (int)sensors.calAcc << endl;
 		usleep(50000);
 		cout << endl;
+		flag = sensors.calSys == 3 && sensors.calMag == 3 && sensors.calGyro == 3 && 
+sensors.calAcc == 3; 
 	} 
-   while (cont++ < 2000);
+   while (cont++ < 2000 && !flag );
 }

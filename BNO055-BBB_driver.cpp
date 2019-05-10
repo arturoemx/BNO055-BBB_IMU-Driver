@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <BNO055-BBB_driver.h>
+#include <bitset>
+
 using namespace std;
 
 	void BNO055::setAddress(unsigned char address)
@@ -132,7 +134,7 @@ using namespace std;
 		int rval;
 		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
 		{
-			printf("Calib: Failed to acquire bus access and/or talk to slave");
+			cerr << "Calib: Failed to acquire bus access and/or talk to slave" << endl;
 			exit(-1);
 		}
 		data[0] = BNO055_CALIB_STAT_ADD;
@@ -140,13 +142,15 @@ using namespace std;
 		rval = read(file, data, 8);
 		if(rval < 0)
 		{
-			printf("Calib: Failed to acquire bus access and/or talk to slave");
+			cerr << "Calib: Failed to acquire bus access and/or talk to slave";
 			strerror_r(errno, _buffer, 63);
-			printf("%s\n\n", _buffer);
+			cerr << _buffer << endl << endl;
 		}
-		cout << "Raw data: " << data[0] << endl;
-		calSys = int8_t ((data[0] >> 6) & 0x03);
+#ifdef __VERBOSE__
+		cout << "Raw data: " << bitset<8>(data[0]) << endl;
+#endif
 		calGyro = int8_t ((data[0] >> 4) & 0x03);
+		calSys = int8_t ((data[0] >> 6) & 0x03);
 		calAcc = int8_t ((data[0] >> 2) & 0x03);
 		calMag = int8_t ((data[0]) & 0x03);
 	}
@@ -157,7 +161,7 @@ using namespace std;
 		cont = 0;
 		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
 		{
-			printf("Quat: Failed to acquire bus access and/or talk to slave.\n");
+			cerr << "Quat: Failed to acquire bus access and/or talk to slave." << endl;
 			exit(-1);
 		}
 		data[0] = BNO055_QUATDATA_ADD;
@@ -168,9 +172,9 @@ using namespace std;
             		if (rval < 0)
             		{
                 		/* ERROR HANDLING: i2c transaction failed */
-                		printf("Quat: Failed to read to the i2c bus.\n");
+                		cerr << "Quat: Failed to read to the i2c bus." << endl;
                 		strerror_r(errno, _buffer, 63);
-                		printf("%s\n\n", _buffer);
+                		cerr <<  _buffer << endl << endl;
             		}
             		else
                 		cont += rval;
