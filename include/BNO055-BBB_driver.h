@@ -40,6 +40,7 @@
 /*REGISTROS DE DATOS*/
 #define BNO055_QUATDATA_ADD 0x20 // WLSB, WMSB, X, Y, Z [0x20 -> 0x27]
 #define BNO055_LINACC_ADD 0x28 // XLSB, XMSB, YLSB, YMSB, ZLSB, ZMSB, [0x28 -> 0x2D]
+#define BNO055_GRAVITY_ADD 0x2E // gXLSB, gXMSB, gYLSB, gYMSB, gZLSB, gZMSB, [0x2E -> 0x33]
 
 /*REGISTRO DE CALIBRACIÓN*/
 #define BNO055_CALIB_STAT_ADD 0x35
@@ -89,6 +90,7 @@ struct BNO055
 	unsigned char imuAddress;
 	int16_t x, y, z, w;
 	int16_t laX, laY, laZ;
+	int16_t gX, gY, gZ;
 	int8_t calGyro, calMag, calAcc, calSys;
 	const double Scale = (1.0 / (1 << 14));
 
@@ -100,6 +102,8 @@ struct BNO055
 	void readCalibVals();
 	void readOrientation_Q();
 	void readLinearAcc();
+	void readGravityVector();
+
 };
 #endif
 

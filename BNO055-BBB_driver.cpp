@@ -37,6 +37,8 @@ using namespace std;
 	void BNO055::start(unsigned char quatadd, operationMode opMode)
 	{
 		x = y = z = w = 0;
+		laX = laY = laZ = 0;
+		gX = gY = gZ = 0;
 		calGyro = calMag = calAcc = calSys = 0;
 		imuAddress = quatadd;
 		setAddress(imuAddress);
@@ -124,6 +126,7 @@ using namespace std;
 		memset(data, 0, 16*sizeof(unsigned char));
 		w = x = y = z = 0;
 		laX = laY = laZ = 0;
+		gX = gY = gZ = 0;
 	}
 
 	BNO055::~BNO055()
@@ -216,4 +219,34 @@ using namespace std;
 		laX = (int16_t) ((data[1] << 8) | data[0]); //Linear Acc. X Component
 		laY = (int16_t) ((data[3] << 8) | data[2]); //Linear Acc. Y Component
 		laZ = (int16_t) ((data[5] << 8) | data[4]); //Linear Acc. Z Component
+	}
+	
+	void BNO055::readGravityVector()
+	{
+		int cont, rval;
+		cont = 0;
+		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
+		{
+			cerr << "LinearAcc: Failed to acquire bus access and/or talk to slave." << endl;
+			exit(-1);
+		}
+		data[0] = BNO055_GRAVITY_ADD;
+		writeData(1);
+		do
+        	{
+            		rval = read(file,data+cont, 6);
+            		if (rval < 0)
+            		{
+                		/* ERROR HANDLING: i2c transaction failed */
+                		cerr << "LinearAcc: Failed to read to the i2c bus." << endl;
+                		strerror_r(errno, _buffer, 63);
+                		cerr <<  _buffer << endl << endl;
+            		}
+            		else
+                		cont += rval;
+        	} 
+		while (cont < 6);
+		gX = (int16_t) ((data[1] << 8) | data[0]); //Linear Acc. X Component
+		gY = (int16_t) ((data[3] << 8) | data[2]); //Linear Acc. Y Component
+		gZ = (int16_t) ((data[5] << 8) | data[4]); //Linear Acc. Z Component
 	}
