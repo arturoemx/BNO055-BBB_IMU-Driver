@@ -34,7 +34,7 @@ using namespace std;
 		usleep(5000);
 	}
 
-	void BNO055::start(unsigned char quatadd)
+	void BNO055::start(unsigned char quatadd, operationMode opMode)
 	{
 		x = y = z = w = 0;
 		calGyro = calMag = calAcc = calSys = 0;
@@ -99,7 +99,7 @@ using namespace std;
 
 		//Modo de operación a utilizar
 		data[0] = BNO055_OPR_MODE_ADD;
-		data[1] = OPERATION_MODE_NDOF;
+		data[1] = opMode;
 		writeData(2);
 #ifdef __VERBOSE__
       cout << "Se define el modo de operacion a utilizar." << endl;
@@ -122,6 +122,8 @@ using namespace std;
 		}
 		start();
 		memset(data, 0, 16*sizeof(unsigned char));
+		w = x = y = z = 0;
+		laX = laY = laZ = 0;
 	}
 
 	BNO055::~BNO055()
@@ -155,7 +157,7 @@ using namespace std;
 		calMag = int8_t ((data[0]) & 0x03);
 	}
 
-	void BNO055::readQuatVals()
+	void BNO055::readOrientation_Q()
 	{
 		int cont, rval;
 		cont = 0;
@@ -168,11 +170,11 @@ using namespace std;
 		writeData(1);
 		do
         	{
-            		rval = read(file,data+cont,8);
+            		rval = read(file,data+cont, 8);
             		if (rval < 0)
             		{
                 		/* ERROR HANDLING: i2c transaction failed */
-                		cerr << "Quat: Failed to read to the i2c bus." << endl;
+                		cerr << "Quaternion: Failed to read to the i2c bus." << endl;
                 		strerror_r(errno, _buffer, 63);
                 		cerr <<  _buffer << endl << endl;
             		}
@@ -184,4 +186,34 @@ using namespace std;
 		x = (int16_t) ((data[3] << 8) | data[2]); //X
 		y = (int16_t) ((data[5] << 8) | data[4]); //Y
 		z = (int16_t) ((data[7] << 8) | data[6]); //Z
+	}
+
+	void BNO055::readLinearAcc()
+	{
+		int cont, rval;
+		cont = 0;
+		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
+		{
+			cerr << "LinearAcc: Failed to acquire bus access and/or talk to slave." << endl;
+			exit(-1);
+		}
+		data[0] = BNO055_LINACC_ADD;
+		writeData(1);
+		do
+        	{
+            		rval = read(file,data+cont, 6);
+            		if (rval < 0)
+            		{
+                		/* ERROR HANDLING: i2c transaction failed */
+                		cerr << "LinearAcc: Failed to read to the i2c bus." << endl;
+                		strerror_r(errno, _buffer, 63);
+                		cerr <<  _buffer << endl << endl;
+            		}
+            		else
+                		cont += rval;
+        	} 
+		while (cont < 6);
+		laX = (int16_t) ((data[1] << 8) | data[0]); //Linear Acc. X Component
+		laY = (int16_t) ((data[3] << 8) | data[2]); //Linear Acc. Y Component
+		laZ = (int16_t) ((data[5] << 8) | data[4]); //Linear Acc. Z Component
 	}

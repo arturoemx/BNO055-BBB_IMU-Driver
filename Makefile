@@ -1,9 +1,9 @@
-CXXFLAGS = -Wall -D__VERBOSE__
+CXXFLAGS = -std=c++11 -Wall -D__VERBOSE__
 
 all: testImuDriver
 
 testImuDriver: objs/testImuDriver.o objs/BNO055-BBB_driver.o
-	g++ $(CXXFLAGS) -o testImuDriver objs/testImuDriver.o objs/BNO055-BBB_driver.o
+	g++ $(CXXFLAGS) -o testImuDriver objs/testImuDriver.o objs/BNO055-BBB_driver.o -lncurses
 
 objs/testImuDriver.o: testImuDriver.cpp include/BNO055-BBB_driver.h
 	g++ $(CXXFLAGS) -c -I ./include -o objs/testImuDriver.o testImuDriver.cpp

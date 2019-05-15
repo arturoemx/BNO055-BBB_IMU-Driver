@@ -39,6 +39,7 @@
 
 /*REGISTROS DE DATOS*/
 #define BNO055_QUATDATA_ADD 0x20 // WLSB, WMSB, X, Y, Z [0x20 -> 0x27]
+#define BNO055_LINACC_ADD 0x28 // XLSB, XMSB, YLSB, YMSB, ZLSB, ZMSB, [0x28 -> 0x2D]
 
 /*REGISTRO DE CALIBRACIÓN*/
 #define BNO055_CALIB_STAT_ADD 0x35
@@ -57,10 +58,28 @@
 #define OPERATION_MODE_NDOF_FMC_OFF 0x0B
 #define OPERATION_MODE_NDOF 0x0C
 
+
 /*MODO DE ENERGÍA*/
 #define POWER_MODE_NORMAL 0x00
 
 using namespace std;
+
+enum operationMode: int8_t
+{
+   CONFIG=0,
+   ACCONLY=1,
+   MAGONLY=2,
+   GIRONLY=3,
+   ACCMAG=4,
+   ACCGYRO=5,
+   MAGGYRO=6,
+   AMG=7,
+   IMU=8,
+   COMPASS=9,
+   M4G=10,
+   NDOF_FMC_OFF=11,
+   NDOF=12
+};
 
 struct BNO055
 {
@@ -69,16 +88,18 @@ struct BNO055
 	char _buffer[8];
 	unsigned char imuAddress;
 	int16_t x, y, z, w;
+	int16_t laX, laY, laZ;
 	int8_t calGyro, calMag, calAcc, calSys;
-	const double scale = (1.0 / (1 << 14));
+	const double Scale = (1.0 / (1 << 14));
 
 	void setAddress(unsigned char address);
 	void writeData(int n);
-	void start(unsigned char quatadd = BNO055_ADDRESS);
+	void start(unsigned char quatadd = BNO055_ADDRESS, operationMode opMode=NDOF);
 	BNO055(char *filename);
 	~BNO055();
 	void readCalibVals();
-	void readQuatVals();
+	void readOrientation_Q();
+	void readLinearAcc();
 };
 #endif
 

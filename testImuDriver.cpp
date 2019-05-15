@@ -1,33 +1,58 @@
 #include <BNO055-BBB_driver.h>
-#include <iostream>
+#include <ncurses.h>
 
 using namespace std;
 
+
 int main()
 {
-	int cont = 0;
+   WINDOW *win;
+   char buff[80];
+	int cont = 0, tipo;
 	bool flag ;
-
 	char filename[] = "/dev/i2c-1";
 	BNO055 sensors(filename);
+
+	win = initscr();
+	cbreak();
+   clearok (win, TRUE);
+	keypad (win, TRUE);
+	noecho ();
+	halfdelay (1);
+	nodelay (win, 1);
 	do
 	{
-		/*sensors.readQuatVals();
-		cout << "W: " << (double) sensors.w * sensors.scale << endl;
-		cout << "X: " << (double) sensors.x * sensors.scale << endl;
-		cout << "Y: " << (double) sensors.y * sensors.scale << endl;
-		cout << "Z: " << (double) sensors.z * sensors.scale << endl;
-		usleep (50000);
-		cout << endl;*/
 		sensors.readCalibVals();
-		cout << "Sys: " << (int)sensors.calSys << endl;
-		cout << "Mag: " << (int)sensors.calMag << endl;
-		cout << "Gyro: " << (int)sensors.calGyro << endl;
-		cout << "Accel: " << (int)sensors.calAcc << endl;
+		snprintf(buff, 79, "Sys:%d, CalMag:%d, CalGyro:%d, CalAcc:%d", (int)sensors.calSys, (int)sensors.calMag, (int)sensors.calGyro, (int)sensors.calAcc);
+      mvwaddstr(win, COLS-1, 0, buff);
+      wrefresh (win);
 		usleep(50000);
-		cout << endl;
-		flag = sensors.calSys == 3 && sensors.calMag == 3 && sensors.calGyro == 3 && 
-sensors.calAcc == 3; 
+		flag = sensors.calSys == 3 && sensors.calMag == 3 && sensors.calGyro == 3 && sensors.calAcc == 3; 
 	} 
    while (cont++ < 2000 && !flag );
+
+   cont = 0;
+   do
+   {
+
+      sensors.readOrientation_Q();
+      snprintf(buff, 79, "Q={%07.3lf, [%07.5lf, %07.5lf, %07.3lf]}",  sensors.w * sensors.Scale, sensors.x * sensors.Scale, sensors.y * sensors.Scale,sensors.z * sensors.Scale);
+      mvwaddstr(win, 1, 0, buff);
+      wrefresh (win);
+
+      sensors.readLinearAcc();
+      snprintf(buff, 79, "lin_Acc=[%07.3lf, %07.3lf, %07.3lf]",  sensors.laX * sensors.Scale, sensors.laY * sensors.Scale, sensors.laZ * sensors.Scale);
+      mvwaddstr(win, 3, 0, buff);
+      wrefresh (win);
+
+      tipo = wgetch (win);
+		if (tipo != ERR)
+		{
+		   if (tipo == 27)
+		      break;
+      }
+      
+      cont++;
+   } while (true);
+   endwin();
 }
