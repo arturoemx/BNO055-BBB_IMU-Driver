@@ -82,23 +82,40 @@ enum operationMode: int8_t
    NDOF=12
 };
 
+union Vec3
+{
+   u_int8_t vc[6];
+   int16_t vi[3];
+};
+
+union Vec4
+{
+   u_int8_t vc[8];
+   int16_t vi[4];
+};
+
 struct BNO055
 {
 	int file; //Descriptor
 	unsigned char data[16];
 	char _buffer[8];
 	unsigned char imuAddress;
-	int16_t x, y, z, w;
-	int16_t laX, laY, laZ;
-	int16_t gX, gY, gZ;
+	Vec4 qOrientation;
+	Vec3 accelVect, gravVect;
 	int8_t calGyro, calMag, calAcc, calSys;
 	const double Scale = (1.0 / (1 << 14));
 
+	BNO055();
+	BNO055(char *filename);
+	~BNO055();
+	void openDevice(char *filename);
+
+   void initMembers ();
+	
 	void setAddress(unsigned char address);
 	void writeData(int n);
 	void start(unsigned char quatadd = BNO055_ADDRESS, operationMode opMode=NDOF);
-	BNO055(char *filename);
-	~BNO055();
+   void readVector(int address, int n, u_int8_t *v);
 	void readCalibVals();
 	void readOrientation_Q();
 	void readLinearAcc();

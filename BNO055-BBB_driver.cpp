@@ -11,35 +11,45 @@
 
 using namespace std;
 
-	void BNO055::setAddress(unsigned char address)
+	BNO055::BNO055()
 	{
-		if(ioctl(file, I2C_SLAVE, address) < 0)
-		{
-			cout << "Failed to acquire bus access and/or talk to slave." << endl;
-			cout.flush();
-			exit(-1);
-		}
+	   initMembers();
+		memset(data, 0, 16*sizeof(unsigned char));
+      file = -1;
 	}
 
-	void BNO055::writeData(int n)
+
+	BNO055::BNO055(char *filename)
 	{
-		int wval;
-		wval = write(file, data, n);
-		if(wval != n)
+	   openDevice(filename);
+	}
+
+	BNO055::~BNO055()
+	{
+		close(file);
+	}
+
+	void BNO055::openDevice(char *filename)
+   {
+		if((file = open(filename, O_RDWR)) < 0)
 		{
-			cout << "Failed to write to i2c bus: " << wval << endl;
-			strerror_r(errno, _buffer, 63);
-			cout << _buffer << endl;
+			perror("BNO055: failed to open i2c bus");
+			exit(-2);
 		}
-		usleep(5000);
+		start();
+		memset(data, 0, 16*sizeof(unsigned char));
+   }
+	void BNO055::initMembers ()
+	{
+	   memset(qOrientation.vi, 0, 4 * sizeof(uint16_t));
+	   memset(accelVect.vi, 0, 3 * sizeof(uint16_t));
+	   memset(gravVect.vi, 0, 3 * sizeof(uint16_t));
+		calGyro = calMag = calAcc = calSys = 0;
 	}
 
 	void BNO055::start(unsigned char quatadd, operationMode opMode)
 	{
-		x = y = z = w = 0;
-		laX = laY = laZ = 0;
-		gX = gY = gZ = 0;
-		calGyro = calMag = calAcc = calSys = 0;
+	   initMembers();
 		imuAddress = quatadd;
 		setAddress(imuAddress);
 
@@ -115,24 +125,29 @@ using namespace std;
 #endif
 	}
 
-	BNO055::BNO055(char *filename)
+	void BNO055::setAddress(unsigned char address)
 	{
-		if((file = open(filename, O_RDWR)) < 0)
+		if(ioctl(file, I2C_SLAVE, address) < 0)
 		{
-			perror("BNO055: failed to open i2c bus");
-			exit(-2);
+			cout << "Failed to acquire bus access and/or talk to slave." << endl;
+			cout.flush();
+			exit(-1);
 		}
-		start();
-		memset(data, 0, 16*sizeof(unsigned char));
-		w = x = y = z = 0;
-		laX = laY = laZ = 0;
-		gX = gY = gZ = 0;
 	}
 
-	BNO055::~BNO055()
+	void BNO055::writeData(int n)
 	{
-		close(file);
+		int wval;
+		wval = write(file, data, n);
+		if(wval != n)
+		{
+			cout << "Failed to write to i2c bus: " << wval << endl;
+			strerror_r(errno, _buffer, 63);
+			cout << _buffer << endl;
+		}
+		usleep(5000);
 	}
+
 
 	void BNO055::readCalibVals()
 	{
@@ -151,102 +166,50 @@ using namespace std;
 			strerror_r(errno, _buffer, 63);
 			cerr << _buffer << endl << endl;
 		}
-#ifdef __VERBOSE__
-		cout << "Raw data: " << bitset<8>(data[0]) << endl;
-#endif
 		calGyro = int8_t ((data[0] >> 4) & 0x03);
 		calSys = int8_t ((data[0] >> 6) & 0x03);
 		calAcc = int8_t ((data[0] >> 2) & 0x03);
 		calMag = int8_t ((data[0]) & 0x03);
 	}
 
-	void BNO055::readOrientation_Q()
+   void BNO055::readVector(int address, int n, u_int8_t *v)
 	{
 		int cont, rval;
 		cont = 0;
 		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
 		{
-			cerr << "Quat: Failed to acquire bus access and/or talk to slave." << endl;
+			cerr << "readVector: Failed to acquire bus access and/or talk to slave." << endl;
 			exit(-1);
 		}
-		data[0] = BNO055_QUATDATA_ADD;
+		data[0] = address;
 		writeData(1);
 		do
         	{
-            		rval = read(file,data+cont, 8);
+            		rval = read(file, v + cont, n);
             		if (rval < 0)
             		{
                 		/* ERROR HANDLING: i2c transaction failed */
-                		cerr << "Quaternion: Failed to read to the i2c bus." << endl;
+                		cerr << "readVector: Failed to read to the i2c bus." << endl;
                 		strerror_r(errno, _buffer, 63);
                 		cerr <<  _buffer << endl << endl;
             		}
             		else
                 		cont += rval;
         	} 
-		while (cont < 8);
-		w = (int16_t) ((data[1] << 8) | data[0]); //W
-		x = (int16_t) ((data[3] << 8) | data[2]); //X
-		y = (int16_t) ((data[5] << 8) | data[4]); //Y
-		z = (int16_t) ((data[7] << 8) | data[6]); //Z
+		while (cont < n);
+	}
+
+	void BNO055::readOrientation_Q()
+	{
+		readVector(BNO055_QUATDATA_ADD, 8, qOrientation.vc);
 	}
 
 	void BNO055::readLinearAcc()
 	{
-		int cont, rval;
-		cont = 0;
-		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
-		{
-			cerr << "LinearAcc: Failed to acquire bus access and/or talk to slave." << endl;
-			exit(-1);
-		}
-		data[0] = BNO055_LINACC_ADD;
-		writeData(1);
-		do
-        	{
-            		rval = read(file,data+cont, 6);
-            		if (rval < 0)
-            		{
-                		/* ERROR HANDLING: i2c transaction failed */
-                		cerr << "LinearAcc: Failed to read to the i2c bus." << endl;
-                		strerror_r(errno, _buffer, 63);
-                		cerr <<  _buffer << endl << endl;
-            		}
-            		else
-                		cont += rval;
-        	} 
-		while (cont < 6);
-		laX = (int16_t) ((data[1] << 8) | data[0]); //Linear Acc. X Component
-		laY = (int16_t) ((data[3] << 8) | data[2]); //Linear Acc. Y Component
-		laZ = (int16_t) ((data[5] << 8) | data[4]); //Linear Acc. Z Component
+		readVector (BNO055_LINACC_ADD, 6, accelVect.vc);
 	}
 	
 	void BNO055::readGravityVector()
 	{
-		int cont, rval;
-		cont = 0;
-		if(ioctl(file, I2C_SLAVE, BNO055_ADDRESS) < 0)
-		{
-			cerr << "LinearAcc: Failed to acquire bus access and/or talk to slave." << endl;
-			exit(-1);
-		}
-		data[0] = BNO055_GRAVITY_ADD;
-		writeData(1);
-		do
-        	{
-            		rval = read(file,data+cont, 6);
-            		if (rval < 0)
-            		{
-                		/* ERROR HANDLING: i2c transaction failed */
-                		cerr << "LinearAcc: Failed to read to the i2c bus." << endl;
-                		strerror_r(errno, _buffer, 63);
-                		cerr <<  _buffer << endl << endl;
-            		}
-            		else
-                		cont += rval;
-        	} 
-		while (cont < 6);
-		gX = (int16_t) ((data[1] << 8) | data[0]); //Linear Acc. X Component
-		gY = (int16_t) ((data[3] << 8) | data[2]); //Linear Acc. Y Component
-		gZ = (int16_t) ((data[5] << 8) | data[4]); //Linear Acc. Z Component
+		readVector (BNO055_GRAVITY_ADD, 6, gravVect.vc);
 	}

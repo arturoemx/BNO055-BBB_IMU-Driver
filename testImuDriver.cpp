@@ -13,8 +13,9 @@ int main()
 	bool flag;
 	double mG;
 	char filename[] = "/dev/i2c-1";
-	BNO055 sensors(filename);
+	BNO055 sensors;
 
+   sensors.openDevice(filename);
 	win = initscr();
 	cbreak();
    clearok (win, TRUE);
@@ -26,7 +27,7 @@ int main()
 	{
 		sensors.readCalibVals();
 		snprintf(buff, 79, "Sys:%d, CalMag:%d, CalGyro:%d, CalAcc:%d", (int)sensors.calSys, (int)sensors.calMag, (int)sensors.calGyro, (int)sensors.calAcc);
-      mvwaddstr(win, COLS-1, 0, buff);
+      mvwaddstr(win, LINES-1, 0, buff);
       wrefresh (win);
 		usleep(50000);
 		flag = sensors.calSys == 3 && sensors.calMag == 3 && sensors.calGyro == 3 && sensors.calAcc == 3; 
@@ -38,7 +39,7 @@ int main()
    {
 
       sensors.readOrientation_Q();
-      prnt = snprintf(buff, 79, "Q={%07.3lf, [%07.5lf, %07.5lf, %07.3lf]}",  sensors.w * sensors.Scale, sensors.x * sensors.Scale, sensors.y * sensors.Scale,sensors.z * sensors.Scale);
+      prnt = snprintf(buff, 79, "Q={%07.3lf, [%07.5lf, %07.5lf, %07.3lf]}",  sensors.qOrientation.vi[0] * sensors.Scale, sensors.qOrientation.vi[1] * sensors.Scale, sensors.qOrientation.vi[2] * sensors.Scale,sensors.qOrientation.vi[3] * sensors.Scale);
       if (prnt < 79)
          memset ( buff+prnt, ' ', 79-prnt);
       buff[79] = 0;
@@ -46,7 +47,7 @@ int main()
       wrefresh (win);
 
       sensors.readLinearAcc();
-      prnt = snprintf(buff, 79, "lin_Acc=[%07.3lf, %07.3lf, %07.3lf]",  sensors.laX * sensors.Scale, sensors.laY * sensors.Scale, sensors.laZ * sensors.Scale);
+      prnt = snprintf(buff, 79, "lin_Acc=[%07.3lf, %07.3lf, %07.3lf]",  sensors.accelVect.vi[0] * sensors.Scale, sensors.accelVect.vi[1] * sensors.Scale, sensors.accelVect.vi[2] * sensors.Scale);
       if (prnt < 79)
          memset ( buff+prnt, ' ', 79-prnt);
       buff[79] = 0;
@@ -54,8 +55,8 @@ int main()
       wrefresh (win);
 
       sensors.readGravityVector();
-      mG = sqrt( sensors.gX * sensors.gX +  sensors.gY * sensors.gY +  sensors.gZ * sensors.gZ);
-      prnt = snprintf(buff, 79, "G=[%07.3lf, %07.3lf, %07.3lf] , |G| = %07.3lf",  (double)sensors.gX * 0.01, (double)sensors.gY * 0.01, (double)sensors.gZ * 0.01, mG*0.01);
+      mG = sqrt( (double)(sensors.gravVect.vi[0]) * double(sensors.gravVect.vi[0]) +  (double)(sensors.gravVect.vi[1]) * (double)(sensors.gravVect.vi[1]) +  double(sensors.gravVect.vi[2]) * (double)(sensors.gravVect.vi[2]));
+      prnt = snprintf(buff, 79, "G=[%07.3lf, %07.3lf, %07.3lf] , |G| = %07.3lf",  (double)sensors.gravVect.vi[0] * 0.01, (double)sensors.gravVect.vi[1] * 0.01, (double)sensors.gravVect.vi[2] * 0.01, mG*0.01);
       if (prnt < 79)
          memset ( buff+prnt, ' ', 79-prnt);
       buff[79] = 0;
