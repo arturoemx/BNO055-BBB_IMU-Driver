@@ -44,15 +44,20 @@ int main()
          memset ( buff+prnt, ' ', 79-prnt);
       buff[79] = 0;
       mvwaddstr(win, 1, 0, buff);
-      wrefresh (win);
 
-      sensors.readLinearAcc();
-      prnt = snprintf(buff, 79, "lin_Acc=[%07.3lf, %07.3lf, %07.3lf]",  sensors.accelVect.vi[0] * sensors.Scale, sensors.accelVect.vi[1] * sensors.Scale, sensors.accelVect.vi[2] * sensors.Scale);
+      sensors.readOrientation_E();
+      prnt = snprintf(buff, 79, "EULER=[%07.5lf, %07.5lf, %07.3lf]",  sensors.eOrientation.vi[0] * sensors.Scale, sensors.eOrientation.vi[1] * sensors.Scale, sensors.eOrientation.vi[2] * sensors.Scale);
       if (prnt < 79)
          memset ( buff+prnt, ' ', 79-prnt);
       buff[79] = 0;
       mvwaddstr(win, 3, 0, buff);
-      wrefresh (win);
+
+      sensors.readLinearAccVector();
+      prnt = snprintf(buff, 79, "lin_Acc=[%07.3lf, %07.3lf, %07.3lf]",  sensors.accelVect.vi[0] * sensors.Scale, sensors.accelVect.vi[1] * sensors.Scale, sensors.accelVect.vi[2] * sensors.Scale);
+      if (prnt < 79)
+         memset ( buff+prnt, ' ', 79-prnt);
+      buff[79] = 0;
+      mvwaddstr(win, 5, 0, buff);
 
       sensors.readGravityVector();
       mG = sqrt( (double)(sensors.gravVect.vi[0]) * double(sensors.gravVect.vi[0]) +  (double)(sensors.gravVect.vi[1]) * (double)(sensors.gravVect.vi[1]) +  double(sensors.gravVect.vi[2]) * (double)(sensors.gravVect.vi[2]));
@@ -60,7 +65,15 @@ int main()
       if (prnt < 79)
          memset ( buff+prnt, ' ', 79-prnt);
       buff[79] = 0;
-      mvwaddstr(win, 5, 0, buff);
+      mvwaddstr(win, 7, 0, buff);
+
+      sensors.readGyroVector();
+      prnt = snprintf(buff, 79, "Gyro=[%07.3lf, %07.3lf, %07.3lf]",  (double)sensors.gyroVect.vi[0] * 0.01, (double)sensors.gyroVect.vi[1] * 0.01, (double)sensors.gyroVect.vi[2] * 0.01 );
+      if (prnt < 79)
+         memset ( buff+prnt, ' ', 79-prnt);
+      buff[79] = 0;
+      mvwaddstr(win, 9, 0, buff);
+
       wrefresh (win);
 
       tipo = wgetch (win);

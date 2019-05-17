@@ -41,9 +41,11 @@ using namespace std;
    }
 	void BNO055::initMembers ()
 	{
-	   memset(qOrientation.vi, 0, 4 * sizeof(uint16_t));
-	   memset(accelVect.vi, 0, 3 * sizeof(uint16_t));
-	   memset(gravVect.vi, 0, 3 * sizeof(uint16_t));
+	   memset(qOrientation.vi, 0, 4 * sizeof(int16_t));
+	   memset(eOrientation.vi, 0, 3 * sizeof(int16_t));
+	   memset(gyroVect.vi, 0, 3 * sizeof(int16_t));
+	   memset(accelVect.vi, 0, 3 * sizeof(int16_t));
+	   memset(gravVect.vi, 0, 3 * sizeof(int16_t));
 		calGyro = calMag = calAcc = calSys = 0;
 	}
 
@@ -199,12 +201,22 @@ using namespace std;
 		while (cont < n);
 	}
 
+	void BNO055::readOrientation_E()
+	{
+		readVector(BNO055_EULERDATA_ADD, 6, eOrientation.vc);
+	}
+
 	void BNO055::readOrientation_Q()
 	{
 		readVector(BNO055_QUATDATA_ADD, 8, qOrientation.vc);
 	}
 
-	void BNO055::readLinearAcc()
+	void BNO055::readGyroVector()
+	{
+		readVector(BNO055_GYRO_ADD, 6, gyroVect.vc);
+	}
+
+	void BNO055::readLinearAccVector()
 	{
 		readVector (BNO055_LINACC_ADD, 6, accelVect.vc);
 	}

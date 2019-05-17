@@ -38,9 +38,11 @@
 			      //0 <- m/s² 
 
 /*REGISTROS DE DATOS*/
-#define BNO055_QUATDATA_ADD 0x20 // WLSB, WMSB, X, Y, Z [0x20 -> 0x27]
-#define BNO055_LINACC_ADD 0x28 // XLSB, XMSB, YLSB, YMSB, ZLSB, ZMSB, [0x28 -> 0x2D]
-#define BNO055_GRAVITY_ADD 0x2E // gXLSB, gXMSB, gYLSB, gYMSB, gZLSB, gZMSB, [0x2E -> 0x33]
+#define BNO055_EULERDATA_ADD 0x1A // Heading[LSB,MSB], Roll[LSB,MSB], Pitch[LSB,MSB], [0x1A -> 0x1F]
+#define BNO055_QUATDATA_ADD 0x20 // W[LSB,MSB], X[LSB,MSB], Y[LSB,MSB], Z[LSB,MSB] [0x20 -> 0x27]
+#define BNO055_LINACC_ADD 0x28 // X[LSB,MSB], Y[LSB,MSB], Z[LSB,MSB], [0x28 -> 0x2D]
+#define BNO055_GRAVITY_ADD 0x2E // gX[LSB,MSB], gY[LSB,MSB], gZ[LSB,MSB], [0x2E -> 0x33]
+#define BNO055_GYRO_ADD 0x14 // gyX[LSB,MSB], gyY[LSB,MSB], gyZ[LSB,MSB], [0x14 -> 0x19]
 
 /*REGISTRO DE CALIBRACIÓN*/
 #define BNO055_CALIB_STAT_ADD 0x35
@@ -101,7 +103,7 @@ struct BNO055
 	char _buffer[8];
 	unsigned char imuAddress;
 	Vec4 qOrientation;
-	Vec3 accelVect, gravVect;
+	Vec3 eOrientation, gyroVect, accelVect, gravVect;
 	int8_t calGyro, calMag, calAcc, calSys;
 	const double Scale = (1.0 / (1 << 14));
 
@@ -118,7 +120,9 @@ struct BNO055
    void readVector(int address, int n, u_int8_t *v);
 	void readCalibVals();
 	void readOrientation_Q();
-	void readLinearAcc();
+	void readOrientation_E();
+	void readGyroVector();
+	void readLinearAccVector();
 	void readGravityVector();
 
 };
