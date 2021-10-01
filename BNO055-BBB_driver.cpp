@@ -142,11 +142,7 @@ using namespace std;
 		int wval;
 		wval = write(file, data, n);
 		if(wval != n)
-		{
-			cout << "Failed to write to i2c bus: " << wval << endl;
-			strerror_r(errno, _buffer, 63);
-			cout << _buffer << endl;
-		}
+			perror("Error al escribir al bus i2c :");
 		usleep(5000);
 	}
 
@@ -163,11 +159,7 @@ using namespace std;
 		writeData(1);
 		rval = read(file, data, 8);
 		if(rval < 0)
-		{
-			cerr << "Calib: Failed to acquire bus access and/or talk to slave";
-			strerror_r(errno, _buffer, 63);
-			cerr << _buffer << endl << endl;
-		}
+		   perror("readCalibVals: Failed to acquire bus access and/or talk to slave:");
 		calGyro = int8_t ((data[0] >> 4) & 0x03);
 		calSys = int8_t ((data[0] >> 6) & 0x03);
 		calAcc = int8_t ((data[0] >> 2) & 0x03);
@@ -189,12 +181,8 @@ using namespace std;
         	{
             		rval = read(file, v + cont, n);
             		if (rval < 0)
-            		{
-                		/* ERROR HANDLING: i2c transaction failed */
-                		cerr << "readVector: Failed to read to the i2c bus." << endl;
-                		strerror_r(errno, _buffer, 63);
-                		cerr <<  _buffer << endl << endl;
-            		}
+                  /* ERROR HANDLING: i2c transaction failed */
+		               perror("readVector - Failed to read to the i2c bus: ");
             		else
                 		cont += rval;
         	} 

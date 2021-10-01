@@ -67,6 +67,10 @@
 
 using namespace std;
 
+/**
+\enum operationMode
+\brief This type defines an enumeration that describes all the possible configuration modes of the Bosch BNO055 IMU Sensor.
+**/
 enum operationMode: int8_t
 {
    CONFIG=0,
@@ -84,47 +88,144 @@ enum operationMode: int8_t
    NDOF=12
 };
 
+/**
+/union Vec3
+\brief This union object allows us to access a three 16-bit integer vector as a six 8 bit unsigned integer vector.  
+**/
 union Vec3
 {
    u_int8_t vc[6];
    int16_t vi[3];
 };
 
+/**
+/union Vec4
+\brief This union object allows us to access a four 16-bit integer vector as a eight 8 bit unsigned integer vector.  
+**/
 union Vec4
 {
    u_int8_t vc[8];
    int16_t vi[4];
 };
 
+/**
+\struct BNO055
+\brief This structure provides an interface to control and use the BNO055 IMU sensor. It contains attributes that store the measurements of the orientation, rotational velocity, translational acceleration and magnetometer measurements.
+**/
 struct BNO055
 {
-	int file; //Descriptor
-	unsigned char data[16];
-	char _buffer[8];
-	unsigned char imuAddress;
-	Vec4 qOrientation;
-	Vec3 eOrientation, gyroVect, accelVect, gravVect;
-	int8_t calGyro, calMag, calAcc, calSys;
-	const double Scale = (1.0 / (1 << 14));
+	int file; //!< Descriptor used to access the i2c serial interface.
+	unsigned char data[16]; //!< array used to store information sent and received from the BNO055.
+	char _buffer[8]; //!< string buffer needed to store error feedback info.
+	unsigned char imuAddress; //!< I2C IMU Address.
+	Vec4 qOrientation; //!<  Array used to store the IMU orientation as a quaternion.
+	Vec3 eOrientation; //!< Array used to store the three eulerian angles that define de 3D IMU orientation.
+	Vec3 gyroVect; //!< Array used to store the 3D rotational velocity gyro-measurements.
+	Vec3 accelVect; //!< Array used to store de 3D translational acceleration measurements.
+	Vec3 gravVect; //!< Array used to store the 3D Gravity vector.
+	int8_t calGyro;//!< Gyro Calibration status value.
+	int8_t calMag;//!< Magnetometer Calibration status value. 
+	int8_t calAcc;//!< Accelerometer Calibration status value. 
+	int8_t calSys;//!< Calibration status value. 
+	const double Scale = (1.0 / (1 << 14)); //!< Scale Factor.
 
+   /**
+   \func BNO055()
+   \brief Class constructor.
+   **/
 	BNO055();
+
+   /**
+   \func BNO055(char *filename)
+   \brief Class constructor.
+   \param char *filename The name of the I2C device used to access the BNO055.
+   **/
 	BNO055(char *filename);
+
+   /**
+   \func ~BNO055()
+   \brief Object constructor.
+   **/
 	~BNO055();
+
+   /**
+   \func void openDevice(char *filename)
+   \brief Open the I2C device used to access the BNO055, and 'starts' the device(see method start).
+   **/
 	void openDevice(char *filename);
 
+   /**
+   \func void initMembers ()
+   \brief Clean up (sets to 0) the object attributes that store the BNO055 measurements, and calibration status. 
+   **/
    void initMembers ();
-	
-	void setAddress(unsigned char address);
-	void writeData(int n);
-	void start(unsigned char quatadd = BNO055_ADDRESS, operationMode opMode=NDOF);
-   void readVector(int address, int n, u_int8_t *v);
-	void readCalibVals();
-	void readOrientation_Q();
-	void readOrientation_E();
-	void readGyroVector();
-	void readLinearAccVector();
-	void readGravityVector();
 
+   /**
+   \func void setAddress(unsigned char address)
+   \brief Aquire buss access to talk to the BNO055.
+   \param unsigned char address The I2C device address.
+   **/
+	void setAddress(unsigned char address);
+
+   /**
+   \func void writeData(int n)
+   \brief Writes the first n bytes stored in the object's data attribute into the BNO055 device
+   \param int n The number of bytes to be written.
+   **/
+	void writeData(int n);
+
+   /**
+   \func void start(unsigned char quatadd = BNO055_ADDRESS, operationMode opMode=NDOF)
+   \brief Starts the BNO055. That means following the procedure to set the operation mode, sensors units, mainly.
+   \param unsigned char quatadd  The I2C BNOO55 address. It defaults to the value BNO055 defined in this file.
+   \param operationMode opMode The BNO055 operation mode set. It defaults to the NDOF.
+   **/
+	void start(unsigned char quatadd = BNO055_ADDRESS, operationMode opMode=NDOF);
+
+   /**
+   \func void readVector(int address, int n, u_int8_t *v)
+   \brief Reads n bytes into de the array pointed by 'v' from the device whose address is 'address'. 
+   \param int address The I2C address from where the bytes will be read.
+   \param int n The number of bytes that will be read.
+   \param u_int8_t *v A pointer to the array where the read bytes will be stored.
+   **/
+   void readVector(int address, int n, u_int8_t *v);
+
+   /**
+   \func void readCalibVals();
+   \brief Reads the calibration status values from the BNO055 into the corresponding object's attributes.
+   **/
+	void readCalibVals();
+
+   /**
+   \func void readOrientation_Q();
+   \brief Reads the quaternion vector from the BNO055 into the corresponding object's attribute.
+   **/
+	void readOrientation_Q();
+
+   /**
+   \func void readOrientation_E()
+   \brief Reads the Euler angles from the BNO055 into the corresponding object's attributes.
+   **/
+	void readOrientation_E();
+
+   /**
+   \func void readGyroVector()
+   \brief Reads the rotational velocity measurements from the BNO055 into the corresponding object's attributes.
+   **/
+	void readGyroVector();
+
+   /**
+   \func void readLinearAccVector()
+   \brief Reads the BNO055 translational acceleration measurements with the gravity vector substracted into the corresponding object's attributes.
+   **/
+	void readLinearAccVector();
+
+   /**
+   \func void readGravityVector()
+   \brief Reads the BNO055 gravity vector estimation into the corresponding object's attribute.
+   **/
+	void readGravityVector();
 };
 #endif
 

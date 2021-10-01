@@ -1,4 +1,5 @@
 CXXFLAGS = -std=c++11 -Wall -O2 -D__VERBOSE__
+#CXXFLAGS = -std=c++11 -g -Wall -D__VERBOSE__
 
 all: ImuDriverTest ImuThreadedTest
 
