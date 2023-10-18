@@ -197,7 +197,7 @@ struct BNO055
    **/
 	void readCalibVals();
 
-   void BNO055::readAll();
+   void readAll();
 
    /**
    \func void readOrientation_Q();
