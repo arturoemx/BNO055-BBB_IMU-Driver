@@ -197,6 +197,8 @@ struct BNO055
    **/
 	void readCalibVals();
 
+   void BNO055::readAll();
+
    /**
    \func void readOrientation_Q();
    \brief Reads the quaternion vector from the BNO055 into the corresponding object's attribute.

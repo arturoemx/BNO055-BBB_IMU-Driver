@@ -189,6 +189,18 @@ using namespace std;
 		while (cont < n);
 	}
 
+	void BNO055::readAll()
+	{
+	   u_int8_t info[32];
+
+		readVector(BNO055_GYRO_ADD, 32, info);
+		memcpy(gyroVect.vc, info, 6 * sizeof( u_int8_t));
+		memcpy(eOrientation.vc, info+6, 6 * sizeof( u_int8_t));
+		memcpy(qOrientation.vc, info+12, 8 * sizeof( u_int8_t));
+		memcpy(accelVect.vc, info+20, 6 * sizeof( u_int8_t));
+		memcpy(gravVect.vc, info+26, 6 * sizeof( u_int8_t));
+	}
+
 	void BNO055::readOrientation_E()
 	{
 		readVector(BNO055_EULERDATA_ADD, 6, eOrientation.vc);
